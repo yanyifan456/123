@@ -37,11 +37,8 @@ export default {
     this._isInCall               = false;
     this._roomId                 = '';
     this._recordId               = null;
-    this._myTaskId               = '';
-    this._audioWs                = null;
     this._subtitleWs             = null;
     this._subtitleWsUrl          = '';
-    this._recorderManager        = null;
     this._subtitleReconnectTimer = null;
     this._subtitleReconnectCount = 0;
 
@@ -171,23 +168,14 @@ export default {
         });
         console.log('[App] startVideoRecord 响应:', JSON.stringify(res));
 
-        const data       = res.data || {};
-        this._recordId   = data.recordId   || null;
-        this._myTaskId   = data.userTaskId || '';
-        const audioWsUrl = data.audioWsUrl || '';
+        const data     = res.data || {};
+        this._recordId = data.recordId || null;
 
-        console.log('[App] recordId:', this._recordId, 'userTaskId:', this._myTaskId);
+        console.log('[App] recordId:', this._recordId);
 
-        // 先连字幕 WS
+        // 连接字幕 WS
         this._subtitleWsUrl = `${SUBTITLE_WS_HOST}/ws/subtitle/${this._roomId}/${phone}`;
         this._connectSubtitleWs();
-
-        // 再连音频 WS
-        if (audioWsUrl && this._myTaskId) {
-          this._connectAudioWs(audioWsUrl + this._myTaskId);
-        } else {
-          console.log('[App] audioWsUrl 或 userTaskId 为空，跳过音频 WS');
-        }
 
       } catch (err) {
         console.log('[App] 启动字幕失败:', err.message || err);
@@ -201,13 +189,6 @@ export default {
       if (!this._isInCall) return;
       this._isInCall = false;
 
-      this._stopRecorder();
-
-      if (this._audioWs) {
-        try { this._audioWs.close(); } catch (_) {}
-        this._audioWs = null;
-      }
-
       this._closeSubtitleWs();
 
       if (this._recordId) {
@@ -220,8 +201,7 @@ export default {
         this._recordId = null;
       }
 
-      this._roomId   = '';
-      this._myTaskId = '';
+      this._roomId = '';
 
       setTimeout(() => {
         subtitleStore.active      = false;
@@ -229,98 +209,6 @@ export default {
         subtitleStore.speakerRole = '';
         subtitleStore.isFinal     = false;
       }, 2000);
-    },
-
-    // ── 音频 WebSocket（发送 PCM 二进制帧）─────────────────────────
-    _connectAudioWs(wsUrl) {
-      console.log('[App] 连接音频 WS:', wsUrl);
-      try {
-        const task = uni.connectSocket({ url: wsUrl });
-
-        if (task && typeof task.onOpen === 'function') {
-          this._audioWs = task;
-          task.onOpen(() => {
-            console.log('[App] 音频 WS 已连接，启动录音');
-            this._startRecorder();
-          });
-          task.onClose(() => {
-            console.log('[App] 音频 WS 关闭');
-            this._stopRecorder();
-          });
-          task.onError((err) => {
-            console.log('[App] 音频 WS 错误:', JSON.stringify(err));
-            this._stopRecorder();
-          });
-        } else {
-          // 降级：uni.connectSocket 未返回 SocketTask，用全局事件
-          console.log('[App] 音频 WS 降级为全局事件模式');
-          uni.onSocketOpen(() => {
-            console.log('[App] 音频 WS (降级) 已连接，启动录音');
-            this._startRecorder();
-          });
-          uni.onSocketClose(() => {
-            console.log('[App] 音频 WS (降级) 关闭');
-            this._stopRecorder();
-          });
-          uni.onSocketError((err) => {
-            console.log('[App] 音频 WS (降级) 错误:', JSON.stringify(err));
-            this._stopRecorder();
-          });
-        }
-      } catch (err) {
-        console.log('[App] 音频 WS 连接异常:', err.message || err);
-      }
-    },
-
-    // ── 录音采集（PCM 16kHz 单声道）────────────────────────────────
-    _startRecorder() {
-      try {
-        this._recorderManager = uni.getRecorderManager();
-
-        this._recorderManager.onFrameRecorded((res) => {
-          if (!res.frameBuffer || res.frameBuffer.byteLength === 0) return;
-          try {
-            if (this._audioWs) {
-              this._audioWs.send({
-                data:    res.frameBuffer,
-                success: () => {},
-                fail:    (e) => { console.log('[App] 帧发送失败:', JSON.stringify(e)); },
-              });
-            } else {
-              // 降级模式
-              uni.sendSocketMessage({
-                data:    res.frameBuffer,
-                success: () => {},
-                fail:    (e) => { console.log('[App] 帧发送失败(降级):', JSON.stringify(e)); },
-              });
-            }
-          } catch (e) {
-            console.log('[App] 帧 send 异常:', e.message || e);
-          }
-        });
-
-        this._recorderManager.onStop(()  => { console.log('[App] 录音停止'); });
-        this._recorderManager.onError((e) => { console.log('[App] 录音错误:', JSON.stringify(e)); });
-
-        this._recorderManager.start({
-          sampleRate:       16000,
-          numberOfChannels: 1,
-          encodeBitRate:    256000,
-          format:           'pcm',
-          frameSize:        1,
-        });
-
-        console.log('[App] 录音已启动 PCM 16kHz 单声道');
-      } catch (err) {
-        console.log('[App] 启动录音失败:', err.message || err);
-      }
-    },
-
-    _stopRecorder() {
-      if (this._recorderManager) {
-        try { this._recorderManager.stop(); } catch (_) {}
-        this._recorderManager = null;
-      }
     },
 
     // ── 字幕 WebSocket（接收字幕 JSON）─────────────────────────────
