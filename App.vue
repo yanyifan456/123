@@ -71,8 +71,7 @@ export default {
     // ── TUICallKit 初始化 ──────────────────────────────────────────
     _initTUICallKit() {
       if (uni.$TUICallKit) {
-        // 已有实例（如重复触发 userLoggedIn），直接补注监听器
-        this._setupCallListeners(uni.$TUICallKit);
+        console.log('[App] TUICallKit 已初始化，跳过');
         return;
       }
       try {
@@ -92,78 +91,89 @@ export default {
         const { userSig, sdkAppID } = genTestUserSig(validUserID);
         uni.$TUICallKit = TUICallKit;
 
-        TUICallKit.login({
-          SDKAppID: sdkAppID,
-          userID:   validUserID,
-          userSig,
-          success: (res) => {
-            console.log('[App] TUICallKit 登录成功:', JSON.stringify(res));
-            this._setupCallListeners(TUICallKit);
-          },
-          fail: (err) => {
-            console.log('[App] TUICallKit 登录失败:', JSON.stringify(err));
-          },
-        });
+        // 旧版原生插件 login：两个独立参数 (options, callback)
+        TUICallKit.login(
+          { SDKAppID: sdkAppID, userID: validUserID, userSig },
+          (res) => {
+            if (res.code === 0) {
+              console.log('[App] TUICallKit 登录成功');
+              // 登录成功后再注册事件监听（globalEvent 需要插件已加载）
+              this._setupCallListeners();
+            } else {
+              console.log('[App] TUICallKit 登录失败:', JSON.stringify(res));
+            }
+          }
+        );
 
-        TUICallKit.setSelfInfo({
-          nickName: uni.getStorageSync('userName') || '患者',
-          avatar:   '',
-          success:  () => {},
-          fail:     (err) => { console.log('[App] setSelfInfo 失败:', JSON.stringify(err)); },
-        });
+        TUICallKit.setSelfInfo(
+          { nickName: uni.getStorageSync('userName') || '患者', avatar: '' },
+          (res) => {
+            if (res.code !== 0) console.log('[App] setSelfInfo 失败:', JSON.stringify(res));
+          }
+        );
 
       } catch (err) {
         console.log('[App] TUICallKit 初始化异常:', err.message || err);
       }
     },
 
-    // ── 通话事件监听 ───────────────────────────────────────────────
-    _setupCallListeners(kit) {
-      // 收到来电邀请（被叫端）：尝试提前缓存 roomId
-      kit.addEventListener('onInvited', (data) => {
-        console.log('[App] onInvited:', JSON.stringify(data));
-        const rid = data?.roomId || data?.room_id || data?.roomID || '';
-        if (rid) this._roomId = String(rid);
-      });
+    // ── 通话事件监听（旧版原生插件通过 globalEvent 抛出事件）────────
+    // 文档：https://cloud.tencent.com/document/product/647/78764
+    _setupCallListeners() {
+      try {
+        // globalEvent 是 uni-app 原生插件抛出事件的标准方式
+        const TUICallKitEvent = uni.requireNativePlugin('globalEvent');
+        if (!TUICallKitEvent) {
+          console.log('[App] globalEvent 插件未加载，事件监听不可用');
+          return;
+        }
 
-      // 通话接通（双方都接听，roomId 此时一定有）
-      kit.addEventListener('onCallBegin', (data) => {
-        console.log('[App] onCallBegin:', JSON.stringify(data));
-        const rid = data?.roomId || data?.room_id || data?.roomID || '';
-        if (rid) this._roomId = String(rid);
-        // 延迟 500ms，等 TRTC 房间完全就绪再启动录制
-        setTimeout(() => { this._handleCallBegin(); }, 500);
-      });
+        // 收到来电邀请（被叫端）
+        TUICallKitEvent.addEventListener('onCallReceived', (res) => {
+          console.log('[App] onCallReceived:', JSON.stringify(res));
+        });
 
-      // 任意一方挂断
-      kit.addEventListener('onCallEnd', (data) => {
-        console.log('[App] onCallEnd:', JSON.stringify(data));
-        this._handleCallEnd();
-      });
+        // 通话接通：res.roomID 是本次通话的音视频房间 ID
+        TUICallKitEvent.addEventListener('onCallBegin', (res) => {
+          console.log('[App] onCallBegin:', JSON.stringify(res));
+          // 文档字段：res.roomID（Number）
+          const rid = res?.roomID || res?.roomId || res?.room_id || '';
+          if (rid) this._roomId = String(rid);
+          setTimeout(() => { this._handleCallBegin(); }, 500);
+        });
 
-      // 拨出未接通就取消
-      kit.addEventListener('onCallCancelled', (data) => {
-        console.log('[App] onCallCancelled:', JSON.stringify(data));
-        this._handleCallEnd();
-      });
+        // 通话结束：res.roomID / res.totalTime
+        TUICallKitEvent.addEventListener('onCallEnd', (res) => {
+          console.log('[App] onCallEnd:', JSON.stringify(res));
+          this._handleCallEnd();
+        });
 
-      // 对方拒接
-      kit.addEventListener('onUserReject', (data) => {
-        console.log('[App] onUserReject:', JSON.stringify(data));
-        this._handleCallEnd();
-      });
+        // 通话取消（主叫取消 / 超时 / 拒接）
+        TUICallKitEvent.addEventListener('onCallCancelled', (res) => {
+          console.log('[App] onCallCancelled:', JSON.stringify(res));
+          this._handleCallEnd();
+        });
 
-      // 无人接听超时
-      kit.addEventListener('onUserNoResponse', (data) => {
-        console.log('[App] onUserNoResponse:', JSON.stringify(data));
-        this._handleCallEnd();
-      });
+        // 对方拒接
+        TUICallKitEvent.addEventListener('onUserReject', (res) => {
+          console.log('[App] onUserReject:', JSON.stringify(res));
+          this._handleCallEnd();
+        });
 
-      kit.addEventListener('onError', (err) => {
-        console.log('[App] TUICallKit onError:', JSON.stringify(err));
-      });
+        // 无人接听超时
+        TUICallKitEvent.addEventListener('onUserNoResponse', (res) => {
+          console.log('[App] onUserNoResponse:', JSON.stringify(res));
+          this._handleCallEnd();
+        });
 
-      console.log('[App] 监听器注册完成');
+        TUICallKitEvent.addEventListener('onError', (res) => {
+          console.log('[App] TUICallKit onError:', JSON.stringify(res));
+        });
+
+        console.log('[App] globalEvent 监听器注册完成');
+      } catch (err) {
+        console.log('[App] 注册事件监听异常:', err.message || err);
+      }
     },
 
     // ── 通话开始 ────────────────────────────────────────────────────
