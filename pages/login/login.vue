@@ -258,6 +258,10 @@
 			uni.setStorageSync("signTag", signTag);
 			uni.setStorageSync("consent", consent);
 			console.log(idCardNo);
+			// 通知 App.vue 初始化 TUICallKit（仅首次登录时有效）
+			// #ifdef APP-PLUS
+			uni.$emit('userLoggedIn');
+			// #endif
 			// 根据状态跳转
 			switch (authStatus) {
 				case 0:
