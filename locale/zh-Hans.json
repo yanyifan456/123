@@ -1,0 +1,85 @@
+{
+	"lang": {
+		"en": "英文",
+		"zh-hans": "简体中文",
+		"zh-hant": "繁体中文"
+	},
+	"title": "环球港医网",
+	"public": {
+		"cancel": "取消",
+		"confirm": "确定",
+		"tips": "提示",
+		"no_data": "暂无数据",
+		"all": "全部",
+		"successful": "操作成功",
+		"failed": "操作失败",
+		"placeholder": "请输入"
+	},
+	"tip": {
+		"the_feature_is_under_development": "功能正在开发"
+	},
+	"tabbar": {
+		"home": "首页",
+		"service": "服务",
+		"recharge": "充值",
+		"message": "消息",
+		"mine": "我的",
+		"health": "健康"
+	},
+
+	"home": {
+		"title": "环球港医网",
+		"gird": {
+			"appointment_for_consultation": "预约看诊",
+			"appointment_record": "预约记录",
+			"hong_kong_medicine_lecture": "港医讲医",
+			"online_consultation": "在线咨询"
+		},
+		"placeholder": "搜索医生、科室、医院",
+		"tabs": {
+			"find_doctor": "找医生",
+			"find_department": "找科室",
+			"find_hospital": "找医院"
+		},
+		"subscription_price": "预约费",
+		"consultation_volume": "问诊量",
+		"fans": "粉丝",
+		"appointment_volume": "预约量",
+		"professional_qualification": "专业资格",
+		"hospital": "医院",
+		"doctor": "医生",
+		"upload_records": "历史病历上传",
+		"consultation_fee": "会诊费用",
+		"payment_type": "支付类型",
+		"we_chat": "微信",
+		"warm_reminder": "温馨提示：",
+		"tips_1": "支付后可线上视频与医生面对面会诊",
+		"tips_2": "医生开出的药品，可跳转下单购买",
+		"to_cope_with": "应付",
+		"pay_now": "立即支付",
+		"unit_money": "元"
+	},
+	"mine": {
+		"title": "我的",
+		"username": "用户名",
+		"membership_details": "会员详情",
+		"consultation_order": "会诊订单",
+		"my_service": "我的服务",
+		"services": {
+			"address_management": "地址管理",
+			"pharmacy_store": "药品商城",
+			"feedback": "意见反馈",
+			"about_us": "关于我们",
+			"help_center": "帮助中心",
+			"language_switch": "语言切换",
+			"consultation_records": "会诊记录",
+			"medical_history": "历史病历",
+			"notifications": "消息通知",
+			"contact_customer_service": "联系客服",
+			"e_invoice": "电子发票",
+			"recharge_records": "充值记录"
+		},
+		"setLang": "设置语言",
+		"currentLang": "当前语言"
+	}
+}

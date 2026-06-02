@@ -1,0 +1,536 @@
+{
+	"pages": [
+		//pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
+		{
+			"path": "pages/loading/loading",
+			"style": {
+				"navigationBarTitleText": "",
+				"navigationStyle": "custom"
+			}
+		}, {
+			"path": "pages/login/login",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/home/home",
+			"style": {
+				"navigationBarTitleText": "首頁",
+				"navigationBarBackgroundColor": "#459767",
+				"enablePullDownRefresh": false,
+				"navigationBarTextStyle": "white"
+			}
+		},
+		{
+			"path": "pages/home/list/search",
+			"style": {
+				"navigationBarTitleText": "搜索",
+				"navigationBarBackgroundColor": "#ffffff",
+				"navigationBarTextStyle": "black"
+			}
+		},
+		{
+			"path": "pages/home/list/domainDoctor",
+			"style": {
+				"navigationBarTitleText": "去看病",
+				"navigationBarBackgroundColor": "#ffffff",
+				"navigationBarTextStyle": "black"
+			}
+		},
+		{
+			"path": "pages/home/list/domainShop",
+			"style": {
+				"navigationBarTitleText": "藥品商城",
+				"navigationBarBackgroundColor": "#ffffff",
+				"navigationBarTextStyle": "black"
+			}
+		}, {
+			"path": "pages/home/list/medicalDetail",
+			"style": {
+				"navigationBarTitleText": "藥品詳情",
+				"navigationBarBackgroundColor": "#ffffff",
+				"navigationBarTextStyle": "black"
+			}
+		},
+		{
+			"path": "pages/home/list/domainConsult",
+			"style": {
+				// "navigationStyle": "custom",
+				"navigationBarTitleText": "AI助手",
+				"navigationBarBackgroundColor": "#d1ecdc",
+				"navigationBarTextStyle": "black"
+			}
+		},
+		{
+			"path": "pages/home/list/domainIndicator",
+			"style": {
+				"navigationBarTitleText": "我的指標",
+				"navigationBarBackgroundColor": "#f8f8f8",
+				"navigationBarTextStyle": "black"
+			}
+		},
+		{
+			"path": "pages/home/list/archiveList",
+			"style": {
+				"navigationBarTitleText": "",
+				"navigationBarBackgroundColor": "#ffffff",
+				"navigationBarTextStyle": "black"
+			}
+		},
+		{
+			"path": "pages/home/list/reportList",
+			"style": {
+				"navigationBarTitleText": "歷史解讀",
+				"navigationBarBackgroundColor": "#ffffff",
+				"navigationBarTextStyle": "black"
+			}
+		}, {
+			"path": "pages/home/list/reportDetail",
+			"style": {
+				"navigationBarTitleText": "解讀詳情",
+				"navigationBarBackgroundColor": "#ffffff",
+				"navigationBarTextStyle": "black"
+			}
+		},
+		{
+			"path": "pages/home/watch/breath",
+			"style": {
+				"navigationBarTitleText": "呼吸",
+				"navigationBarBackgroundColor": "#ffffff",
+				"navigationBarTextStyle": "black"
+			}
+		}, {
+			"path": "pages/home/watch/watchBoxy",
+			"style": {
+				"navigationBarTitleText": "血氧",
+				"navigationBarBackgroundColor": "#ffffff",
+				"navigationBarTextStyle": "black"
+			}
+		}, {
+			"path": "pages/home/watch/watchBp",
+			"style": {
+				"navigationBarTitleText": "血壓",
+				"navigationBarBackgroundColor": "#ffffff",
+				"navigationBarTextStyle": "black"
+			}
+		}, {
+			"path": "pages/home/watch/watchCalorie",
+			"style": {
+				"navigationBarTitleText": "熱量",
+				"navigationBarBackgroundColor": "#ffffff",
+				"navigationBarTextStyle": "black"
+			}
+		}, {
+			"path": "pages/home/watch/watchHr",
+			"style": {
+				"navigationBarTitleText": "心率",
+				"navigationBarBackgroundColor": "#ffffff",
+				"navigationBarTextStyle": "black"
+			}
+		}, {
+			"path": "pages/home/watch/watchHrv",
+			"style": {
+				"navigationBarTitleText": "壓力",
+				"navigationBarBackgroundColor": "#ffffff",
+				"navigationBarTextStyle": "black"
+			}
+		}, {
+			"path": "pages/home/watch/watchSleep",
+			"style": {
+				"navigationBarTitleText": "睡眠",
+				"navigationBarBackgroundColor": "#ffffff",
+				"navigationBarTextStyle": "black"
+			}
+		}, {
+			"path": "pages/home/watch/watchStep",
+			"style": {
+				"navigationBarTitleText": "步數",
+				"navigationBarBackgroundColor": "#ffffff",
+				"navigationBarTextStyle": "black"
+			}
+		}, {
+			"path": "pages/home/watch/watchTmpr",
+			"style": {
+				"navigationBarTitleText": "溫度",
+				"navigationBarBackgroundColor": "#ffffff",
+				"navigationBarTextStyle": "black"
+			}
+		},
+		{
+			"path": "pages/home/list/goDoctor",
+			"style": {
+				"navigationBarTitleText": "預約看診",
+				"navigationBarBackgroundColor": "#ffffff",
+				"navigationBarTextStyle": "black"
+			}
+		},
+		{
+			"path": "pages/home/list/departDoctor",
+			"style": {
+				"navigationBarTitleText": "科室",
+				"navigationBarBackgroundColor": "#ffffff",
+				"navigationBarTextStyle": "black"
+			}
+		},
+		{
+			"path": "pages/home/list/doctorDetail",
+			"style": {
+				"navigationBarTitleText": "醫生詳情",
+				"navigationBarBackgroundColor": "#52ae7b",
+				"navigationBarTextStyle": "black"
+			}
+		},
+		{
+			"path": "pages/home/list/pay",
+			"style": {
+				"navigationBarTitleText": "預約詳情",
+				"navigationBarBackgroundColor": "#ffffff",
+				"navigationBarTextStyle": "black"
+			}
+		}, {
+			"path": "pages/home/list/paySuccess",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/home/list/appointmentInfo",
+			"style": {
+				"navigationBarTitleText": "預約記錄",
+				"navigationBarBackgroundColor": "#ffffff",
+				"navigationBarTextStyle": "black"
+			}
+		},
+		{
+			"path": "pages/home/list/consultInfo",
+			"style": {
+				"navigationBarTitleText": "會診記錄",
+				"navigationBarBackgroundColor": "#ffffff",
+				"navigationBarTextStyle": "black"
+			}
+		},
+		{
+			"path": "pages/home/list/consultDetail",
+			"style": {
+				// "navigationBarTitleText": "建議單詳情",
+				// "navigationBarBackgroundColor": "#ffffff",
+				// "navigationBarTextStyle": "black"
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/home/list/consultDetaissl",
+			"style": {
+				// "navigationBarTitleText": "處方單詳情",
+				// "navigationBarBackgroundColor": "#ffffff",
+				// "navigationBarTextStyle": "black"
+				"navigationStyle": "custom"
+			}
+		},
+		{
+			"path": "pages/mine/mine",
+			"style": {
+				"navigationBarTitleText": "我的",
+				"navigationBarBackgroundColor": "#b3dcc5"
+			}
+		},
+		{
+			"path": "pages/home/infomation/infomation",
+			"style": {
+				"navigationBarTitleText": "港醫講醫",
+				"navigationBarBackgroundColor": "#ffffff"
+			}
+		}, {
+			"path": "pages/home/infomation/infoDetail",
+			"style": {
+				"navigationBarTitleText": "港醫講醫",
+				"navigationBarBackgroundColor": "#ffffff"
+			}
+		}, {
+			"path": "pages/home/list/myDevice",
+			"style": {
+				"navigationBarTitleText": "我的設備",
+				"navigationBarBackgroundColor": "#ffffff"
+			}
+		},
+
+		{
+			"path": "pages/message/message",
+			"style": {
+				"navigationBarTitleText": "消息",
+				"navigationBarBackgroundColor": "#ffffff",
+				"enablePullDownRefresh": false,
+				"navigationBarTextStyle": "black"
+			}
+		},
+		{
+			"path": "pages/message/messageDetail",
+			"style": {
+				"navigationBarTitleText": "消息詳情",
+				"navigationBarBackgroundColor": "#f8f8f8",
+				"enablePullDownRefresh": false,
+				"navigationBarTextStyle": "black"
+			}
+		},
+		{
+			"path": "pages/cart/cart",
+			"style": {
+				"navigationStyle": "custom"
+			}
+		}, {
+			"path": "pages/cart/confirm",
+			"style": {
+				"navigationBarTitleText": "訂單結算",
+				"navigationBarBackgroundColor": "#ffffff",
+				"navigationBarTextStyle": "black"
+			}
+		}, {
+			"path": "pages/mine/minelist/orderList",
+			"style": {
+				"navigationBarTitleText": "會診訂單"
+			}
+		},
+		{
+			"path": "pages/mine/minelist/addressManage",
+			"style": {
+				"navigationBarTitleText": "地址管理"
+			}
+		},
+		{
+			"path": "pages/mine/minelist/opinion",
+			"style": {
+				"navigationBarTitleText": "意見反饋",
+				"app-plus": {
+					"titleNView": {
+						"buttons": [{
+							"text": "\ue613",
+							"fontSrc": "/static/iconfont/iconfont.ttf",
+							"color": "#181b19",
+							"fontSize": "20px"
+						}]
+					}
+				}
+			}
+		},
+		{
+			"path": "pages/mine/minelist/addopinion",
+			"style": {
+				"navigationBarTitleText": "新增反饋"
+			}
+		},
+		{
+			"path": "pages/mine/minelist/detailopinion",
+			"style": {
+				"navigationBarTitleText": "反饋詳情"
+			}
+		},
+		{
+			"path": "pages/mine/minelist/aboutWe",
+			"style": {
+				"navigationBarTitleText": "關於我們"
+			}
+		},
+		{
+			"path": "pages/mine/qs",
+			"style": {
+				"navigationBarTitleText": "簽署使用數據協議"
+			}
+		},
+		{
+			"path": "pages/mine/hg",
+			"style": {
+				"navigationBarTitleText": "新增個人身份信息"
+			}
+		},
+		{
+			"path": "pages/mine/minelist/Contactcustomerservice",
+			"style": {
+				"navigationBarTitleText": "聯繫客服"
+
+			}
+		},
+		{
+			"path": "pages/mine/minelist/recordList",
+			"style": {
+				"navigationBarTitleText": "歷史病歷"
+			}
+		},
+		{
+			"path": "pages/mine/minelist/recordDetail",
+			"style": {
+				"navigationBarTitleText": "病歷上傳",
+				"navigationBarBackgroundColor": "#ffffff"
+			}
+		}, {
+			"path": "pages/mine/minelist/showRecordDetail",
+			"style": {
+				"navigationBarTitleText": "病历详情",
+				"navigationBarBackgroundColor": "#ffffff"
+			}
+		},
+		{
+			"path": "pages/mine/Record/index",
+			"style": {
+				"navigationBarTitleText": "華興藥房",
+				"app-plus": {
+					"titleNView": {
+						"buttons": [{
+							"text": "\ue683",
+							"fontSrc": "/static/iconfont/iconfont.ttf",
+							"color": "#181b19",
+							"fontSize": "20px"
+						}]
+					}
+				}
+			}
+		},
+		{
+			"path": "pages/mine/Record/detail",
+			"style": {
+				"navigationBarTitleText": "買藥詳情"
+			}
+		},
+		{
+			"path": "pages/mine/Record/logistics",
+			"style": {
+				"navigationBarTitleText": "物流詳情"
+			}
+		},
+		{
+			"path": "pages/mine/refund/index",
+			"style": {
+				"navigationBarTitleText": "申請退款"
+			}
+		},
+		{
+			"path": "pages/mine/refund/cg",
+			"style": {
+				"navigationBarTitleText": "提交成功"
+			}
+		},
+		{
+			"path": "pages/mine/refund/sqtk",
+			"style": {
+				"navigationBarTitleText": "申請退款"
+			}
+		},
+		{
+			"path": "pages/mine/refund/sqtkdetail",
+			"style": {
+				"navigationBarTitleText": "退款详情"
+			}
+		},
+		{
+			"path": "pages/mine/minelist/addAddress",
+			"style": {
+				"navigationBarBackgroundColor": "#ffffff"
+			}
+
+
+		},
+		{
+			"path": "pages/mine/minelist/bj",
+			"style": {
+				"navigationBarTitleText": "修改地址",
+				"navigationBarBackgroundColor": "#ffffff",
+				"app-plus": {
+					"titleNView": {
+						"buttons": [{
+							"text": "\ue6ac",
+							"fontSrc": "/static/iconfont/iconfont.ttf",
+							"color": "#181b19",
+							"fontSize": "20px"
+						}]
+					}
+				}
+			}
+		},
+		{
+			"path": "pages/mine/minelist/EditProfile",
+			"style": {
+				"navigationBarTitleText": "編輯資料"
+			}
+		},
+		{
+			"path": "pages/mine/minelist/Selectregion",
+			"style": {
+				"navigationBarTitleText": "編輯資料"
+			}
+		},
+		{
+			"path": "pages/login/renzhen",
+			"style": {
+				"navigationBarTitleText": "實名認證"
+			}
+		},
+		{
+			"path": "pages/login/yhxy",
+			"style": {
+				"navigationBarTitleText": "用户協議"
+			}
+		},
+		{
+			"path": "pages/login/yszc",
+			"style": {
+				"navigationBarTitleText": "隱私政策"
+			}
+		},
+		{
+			"path": "pages/webview/webview",
+			"style": {
+				"navigationBarTitleText": ""
+			}
+		},
+		{
+			"path": "pages/protocol/protocol",
+			"style": {
+				"navigationBarTitleText": "協議詳情",
+				"navigationBarBackgroundColor": "#ffffff"
+			}
+		}
+
+
+	],
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "環球港醫",
+		"navigationBarBackgroundColor": "#f8f8f8",
+		"backgroundColor": "#f8f8f8"
+	},
+	"uniIdRouter": {},
+	"tabBar": {
+		"backgroundColor": "#ffffff",
+		"selectedColor": "#459767",
+		"color": "#a2a2a2",
+		"borderStyle": "#ffffff",
+		"fontSize": "12",
+		"height": "64",
+		"redDotColor": "#ff4c10",
+		"list": [{
+				"iconPath": "/static/tabbar/home.png",
+				"selectedIconPath": "/static/tabbar/home_a.png",
+				"pagePath": "pages/home/home",
+				"text": "首頁"
+			},
+			{
+				"iconPath": "/static/tabbar/msg.png",
+				"selectedIconPath": "/static/tabbar/msg_a.png",
+				"pagePath": "pages/message/message",
+				"text": "消息"
+			},
+			{
+				"iconPath": "/static/tabbar/cart.png",
+				"selectedIconPath": "/static/tabbar/cart_a.png",
+				"pagePath": "pages/cart/cart",
+				"text": "购物车"
+			},
+			{
+				"iconPath": "/static/tabbar/mine.png",
+				"selectedIconPath": "/static/tabbar/mine_a.png",
+				"pagePath": "pages/mine/mine",
+				"text": "我的"
+			}
+		]
+	}
+}

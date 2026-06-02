@@ -1,0 +1,37 @@
+{
+  "id": "",
+  "name": "",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon-",
+  "description": "",
+  "glyphs": [
+    {
+      "icon_id": "880319",
+      "name": "del",
+      "font_class": "del",
+      "unicode": "e6ac",
+      "unicode_decimal": 59052
+    },
+    {
+      "icon_id": "1134336",
+      "name": "日期",
+      "font_class": "riqi",
+      "unicode": "e683",
+      "unicode_decimal": 59011
+    },
+    {
+      "icon_id": "6010917",
+      "name": "新增",
+      "font_class": "xinzeng",
+      "unicode": "e613",
+      "unicode_decimal": 58899
+    },
+    {
+      "icon_id": "22771488",
+      "name": "历史",
+      "font_class": "lishi",
+      "unicode": "e603",
+      "unicode_decimal": 58883
+    }
+  ]
+}

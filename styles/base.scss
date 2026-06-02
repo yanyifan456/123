@@ -1,0 +1,336 @@
+view {
+  box-sizing: border-box;
+}
+.container {
+	box-sizing: border-box;
+	width: 100vw;
+	height: 100vh;
+	background-color: #fafbff;
+	position: relative;
+	font-family: PingFang SC Regular, PingFang SC Regular;
+	display: flex;
+}
+
+.ff {
+	font-family: "黑体";
+}
+// .content-box {
+// 	width: 100%;
+// 	height: 100%;
+// 	padding: 32rpx 48rpx;
+// 	padding-top: 0;
+// 	box-sizing: border-box;
+// 	// overflow: hidden;
+// }
+// .img-box {
+// 	width: 100%;
+// 	height: 100%;
+// 	z-index: 1;
+// }
+.box-mt-12 {
+	margin-top: 12rpx;
+}
+.box-mt-16 {
+	margin-top: 16rpx;
+}
+.box-mt-20 {
+	margin-top: 20rpx;
+}
+.box-mt-24 {
+	margin-top: 24rpx;
+}
+.box-mt-28 {
+	margin-top: 28rpx;
+}
+.box-mt-32 {
+	margin-top: 32rpx;
+}
+.box-mt-38 {
+	margin-top: 38rpx;
+}
+.box-mr-10 {
+	margin-right: 10rpx;
+}
+.box-mr-16 {
+	margin-right: 16rpx;
+}
+.box-mr-20 {
+	margin-right: 20rpx;
+}
+.box-mr-24 {
+	margin-right: 24rpx;
+}
+.box-mr-32 {
+	margin-right: 32rpx;
+}
+.box-mb-24 {
+	margin-bottom: 24rpx;
+}
+.box-mb-32 {
+	margin-bottom: 32rpx;
+}
+.box-mb-68 {
+	margin-bottom: 68rpx;
+}
+
+.fw {
+	font-weight: bold;
+}
+.color-8b8a8d {
+	color: #8b8a8d;
+}
+.color-1cccb7 {
+	color: #1cccb7;
+}
+.color-e85858 {
+	color: #e85858;
+}
+.color-373738 {
+	color: #373738;
+}
+.color-ff6a6a {
+	color: #ff6a6a;
+}
+.color-979698 {
+	color: #979698;
+}
+.color-fff {
+	color: #fff;
+}
+.color-fff-80 {
+	color: rgba(255, 255, 255, 0.8);
+}
+.color-000 {
+	color: #000;
+}
+.color-1fb594 {
+	color: #ff0000;
+}
+.color-120c45 {
+	color: #120c45;
+}
+.color-459767 {
+	color: #459767;
+}
+.color-4063f4 {
+	color: #4063f4;
+}
+.color-181b19 {
+	color: #181b19;
+}
+.color-13103a {
+	color: #13103a;
+}
+.color-7f88a7 {
+	color: #7f88a7;
+}
+.color-868686 {
+	color: #868686;
+}
+.color-13103a {
+	color: #13103a;
+}
+.color-5D8573 {
+	color: #5d8573;
+}
+.color-434343 {
+	color: #434343;
+}
+.color-ffaa00 {
+	color: #ffaa00;
+}
+.color-ff4c10 {
+	color: #ff4c10;
+}
+.color-ea422a {
+	color: #ea422a;
+}
+.color-d2d2d2 {
+	color: #d2d2d2;
+}
+.color-505050 {
+	color: #505050;
+}
+.color-52ae7b {
+	color: #52ae7b;
+}
+.flex-row-sb-c {
+	display: flex;
+	justify-content: space-between;
+	flex-direction: row;
+	align-items: center;
+}
+.flex-column-sb-c {
+	display: flex;
+	justify-content: space-between;
+	flex-direction: column;
+	align-items: center;
+}
+.flex-column-sb-fs {
+	display: flex;
+	justify-content: space-between;
+	flex-direction: column;
+	align-items: flex-start;
+}
+.flex-row-fs-c {
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-start;
+	align-items: center;
+}
+.flex-row-c {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+// 宽高
+.height-100 {
+	height: 100%;
+}
+
+// ======================
+// 间距工具类
+// ======================
+$spacing-values: 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76, 80, 84, 88, 92, 96, 100;
+
+@each $size in $spacing-values {
+	// margin
+	.m-#{$size} {
+		margin: #{$size}rpx;
+	}
+	.mtb-#{$size} {
+		margin: #{$size}rpx 0;
+	}
+	.mlr-#{$size} {
+		margin: 0 #{$size}rpx;
+	}
+	.mt-#{$size} {
+		margin-top: #{$size}rpx;
+	}
+	.mr-#{$size} {
+		margin-right: #{$size}rpx;
+	}
+	.mb-#{$size} {
+		margin-bottom: #{$size}rpx;
+	}
+	.ml-#{$size} {
+		margin-left: #{$size}rpx;
+	}
+
+	// padding
+	.p-#{$size} {
+		padding: #{$size}rpx;
+	}
+	.ptb-#{$size} {
+		padding: #{$size}rpx 0;
+	}
+	.plr-#{$size} {
+		padding: 0 #{$size}rpx;
+	}
+	.pt-#{$size} {
+		padding-top: #{$size}rpx;
+	}
+	.pr-#{$size} {
+		padding-right: #{$size}rpx;
+	}
+	.pb-#{$size} {
+		padding-bottom: #{$size}rpx;
+	}
+	.pl-#{$size} {
+		padding-left: #{$size}rpx;
+	}
+}
+
+.bor-1cccb7 {
+	border: 1px solid #1cccb7;
+}
+.bor-459767 {
+	border: 1px solid #459767;
+}
+.bor-5D8573 {
+	border: 1px solid #5d8573;
+}
+.bor-707070 {
+	border: 1px solid #707070;
+}
+.bor-4063f4 {
+	border: 1px solid #4063f4;
+}
+
+.br-10 {
+	border-radius: 10rpx;
+}
+.br-20 {
+	border-radius: 20rpx;
+}
+.br-16 {
+	border-radius: 16rpx;
+}
+.br-40 {
+	border-radius: 40rpx;
+}
+
+.bgc-e85858 {
+	background: #e85858 !important;
+}
+.bgc-f6f6f6 {
+	background: #f6f6f6 !important;
+}
+.bgc-459767 {
+	background: #459767;
+}
+.bgc-4063f4 {
+	background: #4063f4;
+}
+.bg-fff {
+	background: #fff !important;
+}
+.bg-d8d8d8 {
+	background: #d8d8d8 !important;
+}
+.bg-d8d8d8-30 {
+	background: rgba(216, 216, 216, 0.3) !important;
+}
+.bg-459767-20 {
+	background: rgba(69, 151, 103, 0.2) !important;
+}
+
+.video-box {
+	width: 100%;
+	height: 100%;
+}
+
+// icon ========盒子大小
+$icon-box-size: 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76, 80, 84, 88, 92, 96, 100, 104,
+	108, 112, 116, 120, 124, 128, 132, 136, 140, 144, 148, 152, 156, 160, 164, 168, 172, 176, 180, 184, 188, 192, 196,
+	200;
+
+@each $size in $icon-box-size {
+	.icon-box-#{$size} {
+		width: #{$size}rpx;
+		height: #{$size}rpx;
+	}
+}
+.icon-box-br {
+	border-radius: 50%;
+}
+
+// 字体大小
+$font-size-values: 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52,
+	54, 56, 58, 60, 62, 64, 66, 68, 70, 72, 74, 76, 78, 80, 82, 84, 86, 88, 90, 92, 94, 96, 98, 100, 102;
+
+@each $size in $font-size-values {
+	.fs-#{$size} {
+		font-size: #{$size}rpx;
+	}
+}
+
+@for $i from 1 through 1000 {
+	.w-#{$i} {
+		width: #{$i}rpx;
+	}
+	.h-#{$i} {
+		height: #{$i}rpx;
+	}
+}

@@ -1,0 +1,84 @@
+{
+  "lang": {
+    "en": "English",
+    "zh-hans": "Simplified Chinese",
+    "zh-hant": "Traditional Chinese"
+  },
+  "title": "环球港医网",
+  "public": {
+    "cancel": "Cancel",
+    "confirm": "OK",
+    "tips": "Tips",
+    "no_data": "No Data",
+    "all": "All",
+    "successful": "Success",
+    "failed": "Failed",
+    "placeholder": "Enter"
+  },
+  "tip": {
+    "the_feature_is_under_development": "Feature Under Dev"
+  },
+  "tabbar": {
+    "home": "Home",
+    "service": "Service",
+    "recharge": "Top-up",
+    "message": "Msg",
+    "mine": "Me",
+    "health": "Health"
+  },
+  "home": {
+    "title": "MedLink",
+    "gird": {
+      "appointment_for_consultation": "Appointment",
+      "appointment_record": "Appt. Records",
+      "hong_kong_medicine_lecture": "HK Med Lecture",
+      "online_consultation": "Online Consult"
+    },
+    "placeholder": "Search doctor, dept, hospital",
+    "tabs": {
+      "find_doctor": "Doctor",
+      "find_department": "Dept",
+      "find_hospital": "Hospital"
+    },
+    "subscription_price": "Fee",
+    "consultation_volume": "Consult Qty",
+    "fans": "Fans",
+    "appointment_volume": "Appt. Qty",
+    "professional_qualification": "Qualification",
+    "hospital": "Hospital",
+    "doctor": "Doctor",
+    "upload_records": "Upload Records",
+    "consultation_fee": "Consult Fee",
+    "payment_type": "Pay Type",
+    "we_chat": "WeChat",
+    "warm_reminder": "Tips:",
+    "tips_1": "After payment, consult doctor online",
+    "tips_2": "Doctor prescribed meds can be ordered",
+    "to_cope_with": "Payable",
+    "pay_now": "Pay Now",
+    "unit_money": "¥"
+  },
+  "mine": {
+    "title": "Me",
+    "username": "Username",
+    "membership_details": "Membership",
+    "consultation_order": "Consult Order",
+    "my_service": "My Services",
+    "services": {
+      "address_management": "Address Mgmt",
+      "pharmacy_store": "Pharmacy",
+      "feedback": "Feedback",
+      "about_us": "About Us",
+      "help_center": "Help",
+      "language_switch": "Lang Switch",
+      "consultation_records": "Consult Records",
+      "medical_history": "Medical Records",
+      "notifications": "Notifications",
+      "contact_customer_service": "Contact Support",
+      "e_invoice": "E-Invoice",
+      "recharge_records": "Top-up Records"
+    },
+    "setLang": "Set Language",
+    "currentLang": "Current Language"
+  }
+}

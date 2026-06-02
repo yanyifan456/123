@@ -1,0 +1,9 @@
+.vscode/
+.idea/
+.hbuilderx/
+dist
+node_modules
+uni_modules
+unpackage
+bluetoothPlugin
+nativePlugins

@@ -1,0 +1,84 @@
+{
+	"lang": {
+		"en": "英文",
+		"zh-hans": "简体中文",
+		"zh-hant": "繁體中文"
+	},
+	"title": "環球港醫網",
+	"public": {
+		"cancel": "取消",
+		"confirm": "確定",
+		"tips": "提示",
+		"no_data": "暫無數據",
+		"all": "全部",
+		"successful": "操作成功",
+		"failed": "操作失敗",
+		"placeholder": "請輸入"
+	},
+	"tip": {
+		"the_feature_is_under_development": "功能正在開發"
+	},
+	"tabbar": {
+		"home": "首頁",
+		"service": "服務",
+		"recharge": "充值",
+		"message": "消息",
+		"mine": "我的",
+		"health": "健康"
+	},
+	"home": {
+		"title": "環球港醫網",
+		"gird": {
+			"appointment_for_consultation": "預約睇症",
+			"appointment_record": "預約紀錄",
+			"hong_kong_medicine_lecture": "港醫講醫",
+			"online_consultation": "綫上諮詢"
+		},
+		"placeholder": "搜尋醫生、科室、醫院",
+		"tabs": {
+			"find_doctor": "搵醫生",
+			"find_department": "搵科室",
+			"find_hospital": "搵醫院"
+		},
+		"subscription_price": "預約費",
+		"consultation_volume": "問診量",
+		"fans": "粉絲",
+		"appointment_volume": "預約量",
+		"professional_qualification": "專業資格",
+		"hospital": "醫院",
+		"doctor": "醫生",
+		"upload_records": "歷史病歷上傳",
+		"consultation_fee": "會診費用",
+		"payment_type": "支付類型",
+		"we_chat": "微信",
+		"warm_reminder": "溫馨提示：",
+		"tips_1": "支付後可xian上視頻與醫生面對面會診",
+		"tips_2": "醫生開出的藥品，可跳轉下單購買",
+		"to_cope_with": "應付",
+		"pay_now": "立即支付",
+		"unit_money": "元"
+	},
+	"mine": {
+		"title": "我的",
+		"username": "用戶名",
+		"membership_details": "會員詳情",
+		"consultation_order": "會診訂單",
+		"my_service": "我的服務",
+		"services": {
+			"address_management": "地址管理",
+			"pharmacy_store": "藥品商城",
+			"feedback": "意見反饋",
+			"about_us": "關於我們",
+			"help_center": "幫助中心",
+			"language_switch": "語言切換",
+			"consultation_records": "會診紀錄",
+			"medical_history": "歷史病歷",
+			"notifications": "消息通知",
+			"contact_customer_service": "聯繫客服",
+			"e_invoice": "電子發票",
+			"recharge_records": "充值紀錄"
+		},
+		"setLang": "設置語言",
+		"currentLang": "當前語言"
+	}
+}
