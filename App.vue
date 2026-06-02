@@ -216,9 +216,12 @@ export default {
       console.log('[App] 连接字幕 WS:', this._subtitleWsUrl);
       this._closeSubtitleWs();
       try {
-        const socketTask = uni.connectSocket({ url: this._subtitleWsUrl });
+        const socketTask = uni.connectSocket({
+          url:     this._subtitleWsUrl,
+          success: () => console.log('[App] 字幕 WS 连接中...'),
+          fail:    (err) => console.log('[App] 字幕 WS 发起失败:', JSON.stringify(err)),
+        });
 
-        // FIX 1：赋值给 this._subtitleWs，供 _closeSubtitleWs 使用
         this._subtitleWs = socketTask;
 
         socketTask.onOpen(() => {
