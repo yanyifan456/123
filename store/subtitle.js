@@ -13,11 +13,12 @@
 import { reactive } from 'vue';
 
 const subtitleStore = reactive({
-  active: false,
-  currentText: '',
-  speakerRole: '',
-  isFinal: false,
-  history: [], // [{ speakerRole, text, timestamp }]
+  active:         false,
+  currentText:    '',
+  speakerRole:    '',
+  targetLanguage: '',   // 'zh-CN' | 'zh-TW' | 'en' — 当前字幕目标语言
+  isFinal:        false,
+  history:        [],   // [{ speakerRole, text, targetLanguage, timestamp }]
 });
 
 export default subtitleStore;

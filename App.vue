@@ -3,7 +3,10 @@
   <!-- 全局悬浮字幕：通话期间叠加在所有页面之上 -->
   <view v-if="subtitleVisible && subtitleText" class="subtitle-overlay">
     <view class="subtitle-bar">
-      <text class="subtitle-role">{{ subtitleRole === 'doctor' ? '医生' : '患者' }}</text>
+      <view class="subtitle-header">
+        <text class="subtitle-role">{{ subtitleRole === 'doctor' ? '医生' : '患者' }}</text>
+        <text class="subtitle-lang">{{ subtitleLangLabel }}</text>
+      </view>
       <text
         class="subtitle-text"
         :class="{ 'subtitle-interim': !subtitleFinal }"
@@ -24,10 +27,11 @@ export default {
   // ── 响应式数据，驱动悬浮字幕 template ─────────────────────────────
   data() {
     return {
-      subtitleVisible: false,
-      subtitleText:    '',
-      subtitleRole:    '',
-      subtitleFinal:   false,
+      subtitleVisible:   false,
+      subtitleText:      '',
+      subtitleRole:      '',
+      subtitleFinal:     false,
+      subtitleLangLabel: '',   // 'zh-CN' → '简体' / 'zh-TW' → '繁體' / 'en' → 'EN'
     };
   },
 
@@ -129,8 +133,12 @@ export default {
         }
 
         // 收到来电邀请（被叫端）
+        // res.callerId = 医生的 TUI userID，暂存供 startVideoRecord 使用
         TUICallKitEvent.addEventListener('onCallReceived', (res) => {
           console.log('[App] onCallReceived:', JSON.stringify(res));
+          if (res?.callerId) {
+            uni.setStorageSync('currentDoctorId', res.callerId);
+          }
         });
 
         // 通话接通：res.roomID 是本次通话的音视频房间 ID
@@ -188,11 +196,16 @@ export default {
       subtitleStore.history     = [];
       this._syncView();
 
-      const phone    = uni.getStorageSync('phone')           || '';
-      const doctorId = uni.getStorageSync('currentDoctorId') || '';
-      const orderId  = uni.getStorageSync('currentOrderId')  || '';
+      const phone                = uni.getStorageSync('phone')                || '';
+      const doctorId             = uni.getStorageSync('currentDoctorId')      || '';
+      const orderId              = uni.getStorageSync('currentOrderId')       || '';
+      // 语言配置：可由设置页写入 storage，默认值遵循文档场景1（粤语医生 ↔ 普通话患者）
+      const doctorSpeakLanguage  = uni.getStorageSync('doctorSpeakLanguage')  || 'yue-CN';
+      const patientSpeakLanguage = uni.getStorageSync('patientSpeakLanguage') || 'zh-CN';
+      const patientOutputFormat  = uni.getStorageSync('patientOutputFormat')  || 'simplified';
+      const doctorOutputFormat   = uni.getStorageSync('doctorOutputFormat')   || 'traditional';
 
-      console.log('[App] 通话开始 roomId:', this._roomId, 'phone:', phone);
+      console.log('[App] 通话开始 roomId:', this._roomId, 'phone:', phone, 'doctorId:', doctorId);
 
       if (!this._roomId) {
         console.log('[App] roomId 为空，字幕无法启动');
@@ -208,6 +221,10 @@ export default {
           userId:   phone,
           doctorId,
           orderId,
+          doctorSpeakLanguage,
+          patientSpeakLanguage,
+          patientOutputFormat,
+          doctorOutputFormat,
         });
         console.log('[App] startVideoRecord 响应:', JSON.stringify(res));
 
@@ -367,37 +384,38 @@ export default {
     },
 
     // ── 字幕 WebSocket（接收字幕 JSON）─────────────────────────────
+    // 使用 plus.net.WebSocket（APP-PLUS 原生 API），避免 uni.connectSocket
+    // 在实机上不返回 SocketTask 的问题
     _connectSubtitleWs() {
       console.log('[App] 连接字幕 WS:', this._subtitleWsUrl);
+      this._closeSubtitleWs();
       try {
-        const task = uni.connectSocket({ url: this._subtitleWsUrl, multiple: true });
-        if (!task || typeof task.onOpen !== 'function') {
-          console.log('[App] 字幕 WS 不支持 SocketTask，字幕不可用');
-          return;
-        }
-        this._subtitleWs = task;
+        // plus.net.WebSocket 是 HTML5+ Runtime 提供的原生 WS，在 APP 上始终可用
+        const ws = new plus.net.WebSocket(this._subtitleWsUrl);
+        this._subtitleWs = ws;
 
-        task.onOpen(() => {
+        ws.onopen = () => {
           console.log('[App] 字幕 WS 已连接');
           this._reconnectCount = 0;
           if (this._reconnectTimer) {
             clearTimeout(this._reconnectTimer);
             this._reconnectTimer = null;
           }
-        });
+        };
 
-        task.onMessage((event) => {
+        ws.onmessage = (event) => {
           this._handleSubtitleMessage(event.data);
-        });
+        };
 
-        task.onClose(() => {
-          console.log('[App] 字幕 WS 断开');
+        ws.onclose = (event) => {
+          console.log('[App] 字幕 WS 断开 code:', event.code);
+          this._subtitleWs = null;
           if (this._isInCall) this._scheduleReconnect();
-        });
+        };
 
-        task.onError((err) => {
+        ws.onerror = (err) => {
           console.log('[App] 字幕 WS 错误:', JSON.stringify(err));
-        });
+        };
 
       } catch (err) {
         console.log('[App] 字幕 WS 连接异常:', err.message || err);
@@ -410,17 +428,19 @@ export default {
         const msg = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
         if (!msg || msg.type !== 'text') return;
 
-        const { speakerRole, convertedText, isFinal } = msg;
+        const { speakerRole, convertedText, targetLanguage, isFinal } = msg;
 
-        subtitleStore.currentText = convertedText || '';
-        subtitleStore.speakerRole = speakerRole   || '';
-        subtitleStore.isFinal     = !!isFinal;
+        subtitleStore.currentText    = convertedText    || '';
+        subtitleStore.speakerRole    = speakerRole      || '';
+        subtitleStore.targetLanguage = targetLanguage   || '';
+        subtitleStore.isFinal        = !!isFinal;
 
         if (isFinal && convertedText) {
           subtitleStore.history.push({
             speakerRole,
-            text:      convertedText,
-            timestamp: msg.timestamp || Date.now(),
+            text:           convertedText,
+            targetLanguage: targetLanguage || '',
+            timestamp:      msg.timestamp || Date.now(),
           });
           if (subtitleStore.history.length > 50) subtitleStore.history.shift();
         }
@@ -451,18 +471,32 @@ export default {
         this._reconnectTimer = null;
       }
       if (this._subtitleWs) {
-        try { this._subtitleWs.close(); } catch (_) {}
+        try {
+          // plus.net.WebSocket 用 close(code, reason) 关闭
+          this._subtitleWs.close(1000, 'call ended');
+        } catch (_) {}
         this._subtitleWs = null;
       }
       this._reconnectCount = 0;
     },
 
+    // ── targetLanguage → 可读标签 ────────────────────────────────────
+    _langLabel(targetLanguage) {
+      const map = {
+        'zh-CN': '简体',
+        'zh-TW': '繁體',
+        'en':    'EN',
+      };
+      return map[targetLanguage] || '';
+    },
+
     // ── 同步 subtitleStore -> data()，驱动 template 渲染 ───────────
     _syncView() {
-      this.subtitleVisible = subtitleStore.active;
-      this.subtitleText    = subtitleStore.currentText;
-      this.subtitleRole    = subtitleStore.speakerRole;
-      this.subtitleFinal   = subtitleStore.isFinal;
+      this.subtitleVisible   = subtitleStore.active;
+      this.subtitleText      = subtitleStore.currentText;
+      this.subtitleRole      = subtitleStore.speakerRole;
+      this.subtitleFinal     = subtitleStore.isFinal;
+      this.subtitleLangLabel = this._langLabel(subtitleStore.targetLanguage);
     },
 
     // #endif
@@ -498,10 +532,23 @@ export default {
   align-items: flex-start;
 }
 
+.subtitle-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: 6rpx;
+  gap: 12rpx;
+}
+
 .subtitle-role {
   font-size: 22rpx;
   color: rgba(255, 255, 255, 0.55);
-  margin-bottom: 6rpx;
+  line-height: 1.3;
+}
+
+.subtitle-lang {
+  font-size: 20rpx;
+  color: rgba(255, 255, 255, 0.38);
   line-height: 1.3;
 }
 
