@@ -120,14 +120,14 @@ export default {
     // ── 通话事件监听 ───────────────────────────────────────────────
     _setupCallListeners(kit) {
       // 收到来电邀请（被叫端）：尝试提前缓存 roomId
-      kit.on('onInvited', (data) => {
+      kit.addEventListener('onInvited', (data) => {
         console.log('[App] onInvited:', JSON.stringify(data));
         const rid = data?.roomId || data?.room_id || data?.roomID || '';
         if (rid) this._roomId = String(rid);
       });
 
       // 通话接通（双方都接听，roomId 此时一定有）
-      kit.on('onCallBegin', (data) => {
+      kit.addEventListener('onCallBegin', (data) => {
         console.log('[App] onCallBegin:', JSON.stringify(data));
         const rid = data?.roomId || data?.room_id || data?.roomID || '';
         if (rid) this._roomId = String(rid);
@@ -136,30 +136,30 @@ export default {
       });
 
       // 任意一方挂断
-      kit.on('onCallEnd', (data) => {
+      kit.addEventListener('onCallEnd', (data) => {
         console.log('[App] onCallEnd:', JSON.stringify(data));
         this._handleCallEnd();
       });
 
       // 拨出未接通就取消
-      kit.on('onCallCancelled', (data) => {
+      kit.addEventListener('onCallCancelled', (data) => {
         console.log('[App] onCallCancelled:', JSON.stringify(data));
         this._handleCallEnd();
       });
 
       // 对方拒接
-      kit.on('onUserReject', (data) => {
+      kit.addEventListener('onUserReject', (data) => {
         console.log('[App] onUserReject:', JSON.stringify(data));
         this._handleCallEnd();
       });
 
       // 无人接听超时
-      kit.on('onUserNoResponse', (data) => {
+      kit.addEventListener('onUserNoResponse', (data) => {
         console.log('[App] onUserNoResponse:', JSON.stringify(data));
         this._handleCallEnd();
       });
 
-      kit.on('onError', (err) => {
+      kit.addEventListener('onError', (err) => {
         console.log('[App] TUICallKit onError:', JSON.stringify(err));
       });
 
