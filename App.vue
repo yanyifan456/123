@@ -1,22 +1,15 @@
 <template>
   <!-- #ifdef APP-PLUS -->
-  <view>
-    <!-- 全局悬浮字幕层：通话中显示 -->
-    <view
-      v-if="subtitleStore.active && subtitleStore.currentText"
-      class="subtitle-overlay"
-    >
-      <view class="subtitle-bar">
-        <text class="subtitle-role">
-          {{ subtitleStore.speakerRole === 'doctor' ? '医生' : '患者' }}
-        </text>
-        <text
-          class="subtitle-text"
-          :class="{ 'subtitle-interim': !subtitleStore.isFinal }"
-        >
-          {{ subtitleStore.currentText }}
-        </text>
-      </view>
+  <!-- 全局悬浮字幕：通话期间叠加在所有页面之上 -->
+  <view
+    v-if="subtitleVisible && subtitleText"
+    class="subtitle-overlay"
+  >
+    <view class="subtitle-bar">
+      <text class="subtitle-role">{{ subtitleRole === 'doctor' ? '医生' : '患者' }}</text>
+      <text class="subtitle-text" :class="{ 'subtitle-interim': !subtitleFinal }">
+        {{ subtitleText }}
+      </text>
     </view>
   </view>
   <!-- #endif -->
@@ -24,165 +17,194 @@
 
 <script setup>
 // #ifdef APP-PLUS
-import { ref, onMounted, onUnmounted } from 'vue';
-import subtitleStore from '@/store/subtitle.js';
-import { startVideoRecord, stopVideoRecord, SUBTITLE_WS_HOST } from '@/api/subtitle.js';
+import { ref } from 'vue';
+import { onLaunch, onShow, onHide } from '@dcloudio/uni-app';
 import { genTestUserSig } from '@/debug/GenerateTestUserSig.js';
+import { startVideoRecord, stopVideoRecord, SUBTITLE_WS_HOST } from '@/api/subtitle.js';
+import subtitleStore from '@/store/subtitle.js';
 
-// ─── 内部状态（不需要响应式，用普通变量）───
-let isInCall = false;
-let roomId = '';
-let recordId = null;
-let myTaskId = '';
+// ── 悬浮字幕响应式状态（驱动 template）─────────────────────
+// subtitleStore 是普通 reactive 对象，App.vue 的 template 无法直接追踪，
+// 所以用独立 ref 来驱动视图，收到消息后手动同步。
+const subtitleVisible = ref(false);
+const subtitleText    = ref('');
+const subtitleRole    = ref('');
+const subtitleFinal   = ref(false);
 
-let audioWs = null;       // 音频流 SocketTask
-let subtitleWs = null;    // 字幕 SocketTask
-let recorderManager = null;
-let subtitleWsUrl = '';
+function syncView() {
+  subtitleVisible.value = subtitleStore.active;
+  subtitleText.value    = subtitleStore.currentText;
+  subtitleRole.value    = subtitleStore.speakerRole;
+  subtitleFinal.value   = subtitleStore.isFinal;
+}
+
+// ── 通话内部状态（普通变量）────────────────────────────────
+let isInCall       = false;
+let roomId         = '';
+let recordId       = null;
+let myTaskId       = '';
+
+let audioWs        = null;  // SocketTask — 发送 PCM 音频
+let subtitleWs     = null;  // SocketTask — 接收字幕 JSON
+let recorderMgr    = null;  // RecorderManager
+
+let subtitleWsUrl  = '';
 let reconnectCount = 0;
 let reconnectTimer = null;
 
-// ─── TUICallKit 初始化 ───────────────────────
-const initTUICallKit = () => {
+// ── TUICallKit 初始化 ─────────────────────────────────────
+function initTUICallKit() {
   try {
     const TUICallKit = uni.requireNativePlugin('TencentCloud-TUICallKit');
     if (!TUICallKit) {
-      console.log('[v0] TUICallKit 插件加载失败');
+      console.log('[Subtitle] TUICallKit 插件未加载');
       return;
     }
 
-    const phone = uni.getStorageSync('phone');
-    const validUserID = String(phone || '').replace(/[^a-zA-Z0-9_-]/g, '');
-    const { userSig, sdkAppID } = genTestUserSig(validUserID);
+    const phone = uni.getStorageSync('phone') || '';
+    // TUICallKit userID 只允许 a-zA-Z0-9_-
+    const validUserID = String(phone).replace(/[^a-zA-Z0-9_-]/g, '');
+    if (!validUserID) {
+      console.log('[Subtitle] phone 为空，跳过 TUICallKit 初始化');
+      return;
+    }
 
+    const { userSig, sdkAppID } = genTestUserSig(validUserID);
     uni.$TUICallKit = TUICallKit;
 
     TUICallKit.login({
       SDKAppID: sdkAppID,
       userID: validUserID,
       userSig,
-      success: (res) => {
-        console.log('[v0] TUICallKit 登录成功:', res);
-        setupCallListeners();
+      success(res) {
+        console.log('[Subtitle] TUICallKit 登录成功:', JSON.stringify(res));
+        setupCallListeners(TUICallKit);
       },
-      fail: (err) => {
-        console.log('[v0] TUICallKit 登录失败:', JSON.stringify(err));
-        uni.showToast({ title: '通话服务登录失败', icon: 'none' });
+      fail(err) {
+        console.log('[Subtitle] TUICallKit 登录失败:', JSON.stringify(err));
       },
     });
 
     TUICallKit.setSelfInfo({
       nickName: uni.getStorageSync('userName') || '患者',
       avatar: '',
-      success: () => {},
-      fail: (err) => console.log('[v0] setSelfInfo 失败:', JSON.stringify(err)),
+      success() {},
+      fail(err) { console.log('[Subtitle] setSelfInfo 失败:', JSON.stringify(err)); },
     });
   } catch (err) {
-    console.log('[v0] TUICallKit 初始化异常:', err.message || err);
+    console.log('[Subtitle] TUICallKit 初始化异常:', err.message || err);
   }
-};
+}
 
-// ─── 通话事件监听 ────────────────────────────
-const setupCallListeners = () => {
-  const kit = uni.$TUICallKit;
-
-  // 收到来电：提前存 roomId（TUICallKit 原生插件事件名）
+// ── 通话事件监听 ──────────────────────────────────────────
+function setupCallListeners(kit) {
+  // 收到来电邀请：提前缓存 roomId（兼容不同字段名）
   kit.on('onInvited', (data) => {
-    console.log('[v0] 收到来电邀请:', JSON.stringify(data));
-    if (data && data.roomId) {
-      roomId = String(data.roomId);
-    }
+    console.log('[Subtitle] onInvited:', JSON.stringify(data));
+    const rid = data?.roomId || data?.room_id || data?.roomID || '';
+    if (rid) roomId = String(rid);
   });
 
-  // 通话开始（APP 端接通后触发）
+  // 通话已接通（双方都接听后触发）
   kit.on('onCallBegin', (data) => {
-    console.log('[v0] 通话开始:', JSON.stringify(data));
-    if (data && data.roomId) {
-      roomId = String(data.roomId);
-    }
-    onCallBegin();
+    console.log('[Subtitle] onCallBegin:', JSON.stringify(data));
+    const rid = data?.roomId || data?.room_id || data?.roomID || '';
+    if (rid) roomId = String(rid);
+    handleCallBegin();
   });
 
-  // 通话结束
+  // 通话结束（主动挂断）
   kit.on('onCallEnd', (data) => {
-    console.log('[v0] 通话结束:', JSON.stringify(data));
-    onCallEnd();
+    console.log('[Subtitle] onCallEnd:', JSON.stringify(data));
+    handleCallEnd();
   });
 
-  // 通话被取消/拒绝/超时未接
+  // 通话被取消（拨出未接通就取消）
   kit.on('onCallCancelled', (data) => {
-    console.log('[v0] 通话被取消:', JSON.stringify(data));
-    onCallEnd();
+    console.log('[Subtitle] onCallCancelled:', JSON.stringify(data));
+    handleCallEnd();
+  });
+
+  // 对方拒接
+  kit.on('onUserReject', (data) => {
+    console.log('[Subtitle] onUserReject:', JSON.stringify(data));
+    handleCallEnd();
+  });
+
+  // 无人接听超时
+  kit.on('onUserNoResponse', (data) => {
+    console.log('[Subtitle] onUserNoResponse:', JSON.stringify(data));
+    handleCallEnd();
   });
 
   kit.on('onError', (err) => {
-    console.log('[v0] TUICallKit 错误:', JSON.stringify(err));
+    console.log('[Subtitle] TUICallKit 错误:', JSON.stringify(err));
   });
 
-  console.log('[v0] TUICallKit 监听器设置完成');
-};
+  console.log('[Subtitle] TUICallKit 监听器注册完成');
+}
 
-// ─── 通话开始处理 ─────────────────────────────
-const onCallBegin = async () => {
+// ── 通话开始 ──────────────────────────────────────────────
+async function handleCallBegin() {
   if (isInCall) return;
   isInCall = true;
-  subtitleStore.active = true;
-  subtitleStore.currentText = '';
-  subtitleStore.history = [];
 
-  const phone = uni.getStorageSync('phone');
+  // 重置字幕状态
+  subtitleStore.active      = true;
+  subtitleStore.currentText = '';
+  subtitleStore.speakerRole = '';
+  subtitleStore.isFinal     = false;
+  subtitleStore.history     = [];
+  syncView();
+
+  const phone    = uni.getStorageSync('phone') || '';
   const doctorId = uni.getStorageSync('currentDoctorId') || '';
-  const orderId = uni.getStorageSync('currentOrderId') || '';
+  const orderId  = uni.getStorageSync('currentOrderId') || '';
+
+  console.log('[Subtitle] 通话开始 roomId:', roomId, 'phone:', phone, 'doctorId:', doctorId);
 
   if (!roomId) {
-    console.log('[v0] 通话开始时 roomId 为空，无法启动字幕');
-    // 仍然标记 isInCall，等 roomId 更新后重试
+    console.log('[Subtitle] roomId 为空，字幕服务无法启动');
     isInCall = false;
     subtitleStore.active = false;
+    syncView();
     return;
   }
 
   try {
-    // 1. 调用后端 /video/record/start 获取 taskId
-    const res = await startVideoRecord({
-      roomId,
-      userId: phone,
-      doctorId,
-      orderId,
-    });
+    // 1. 调用后端接口获取 taskId 和 audioWsUrl
+    const res = await startVideoRecord({ roomId, userId: phone, doctorId, orderId });
+    console.log('[Subtitle] startVideoRecord 响应:', JSON.stringify(res));
 
-    console.log('[v0] startVideoRecord 响应:', JSON.stringify(res));
+    // 兼容 res.data.data / res.data / res 三种结构
+    const payload   = res?.data?.data || res?.data || res;
+    recordId        = payload.recordId;
+    myTaskId        = payload.userTaskId;
+    const wsUrlBase = payload.audioWsUrl; // "ws://x.x.x.x:8089/ws/audio/"
 
-    const data = res.data || res;
-    recordId = data.recordId;
-    myTaskId = data.userTaskId;
-    const audioWsUrl = data.audioWsUrl;
+    console.log('[Subtitle] recordId:', recordId, 'userTaskId:', myTaskId, 'audioWsUrl:', wsUrlBase);
 
-    console.log('[v0] recordId:', recordId, 'userTaskId:', myTaskId, 'audioWsUrl:', audioWsUrl);
-
-    // 2. 患者端字幕 WS 用手机号
+    // 2. 患者端字幕 WS 用手机号（与 startVideoRecord 的 userId 一致）
     subtitleWsUrl = `${SUBTITLE_WS_HOST}/ws/subtitle/${roomId}/${phone}`;
 
-    // 3. 先连接字幕 WS
+    // 3. 先连字幕 WS，再连音频 WS（音频 WS 开启后才开始录音）
     connectSubtitleWs();
-
-    // 4. 再连接音频 WS（连接成功后自动开始录音）
-    connectAudioWs(audioWsUrl + myTaskId);
+    connectAudioWs(wsUrlBase + myTaskId);
   } catch (err) {
-    console.log('[v0] 通话开始处理失败:', err.message || JSON.stringify(err));
+    console.log('[Subtitle] 启动字幕服务失败:', err.message || JSON.stringify(err));
     isInCall = false;
     subtitleStore.active = false;
+    syncView();
   }
-};
+}
 
-// ─── 通话结束处理 ─────────────────────────────
-const onCallEnd = async () => {
+// ── 通话结束 ──────────────────────────────────────────────
+async function handleCallEnd() {
   if (!isInCall) return;
   isInCall = false;
 
   stopRecorder();
 
-  // 关闭音频 WS（后端自动停止 ASR）
   if (audioWs) {
     try { audioWs.close(); } catch (_) {}
     audioWs = null;
@@ -193,118 +215,110 @@ const onCallEnd = async () => {
   if (recordId) {
     try {
       await stopVideoRecord(recordId);
-      console.log('[v0] 录制已停止');
+      console.log('[Subtitle] 录制已停止');
     } catch (err) {
-      console.log('[v0] 停止录制失败:', err.message || err);
+      console.log('[Subtitle] 停止录制失败:', err.message || err);
     }
     recordId = null;
   }
 
-  // 延迟隐藏字幕
+  roomId   = '';
+  myTaskId = '';
+
+  // 延迟 2s 再隐藏，让最后一句字幕能看完
   setTimeout(() => {
-    subtitleStore.active = false;
+    subtitleStore.active      = false;
     subtitleStore.currentText = '';
     subtitleStore.speakerRole = '';
-    subtitleStore.isFinal = false;
+    subtitleStore.isFinal     = false;
+    syncView();
   }, 2000);
-};
+}
 
-// ─── 音频采集 ─────────────────────────────────
-
-const connectAudioWs = (wsUrl) => {
-  console.log('[v0] 连接音频 WS:', wsUrl);
+// ── 音频 WebSocket（发送 PCM）────────────────────────────
+function connectAudioWs(wsUrl) {
+  console.log('[Subtitle] 连接音频 WS:', wsUrl);
   try {
-    audioWs = uni.connectSocket({
-      url: wsUrl,
-      success: () => {},
-      fail: (err) => console.log('[v0] 音频 WS 连接失败:', JSON.stringify(err)),
-    });
+    // multiple: true 确保每次都拿到独立的 SocketTask 对象
+    audioWs = uni.connectSocket({ url: wsUrl, multiple: true });
 
     audioWs.onOpen(() => {
-      console.log('[v0] 音频 WS 已连接，开始录音');
+      console.log('[Subtitle] 音频 WS 已连接，开始录音');
       startRecorder();
     });
 
     audioWs.onClose(() => {
-      console.log('[v0] 音频 WS 已关闭');
+      console.log('[Subtitle] 音频 WS 已关闭');
       stopRecorder();
     });
 
     audioWs.onError((err) => {
-      console.log('[v0] 音频 WS 错误:', JSON.stringify(err));
+      console.log('[Subtitle] 音频 WS 错误:', JSON.stringify(err));
       stopRecorder();
     });
   } catch (err) {
-    console.log('[v0] 音频 WS 连接异常:', err.message || err);
+    console.log('[Subtitle] 音频 WS 连接异常:', err.message || err);
   }
-};
+}
 
-const startRecorder = () => {
+// ── 录音采集（PCM 16kHz 单声道）─────────────────────────
+function startRecorder() {
   try {
-    recorderManager = uni.getRecorderManager();
+    recorderMgr = uni.getRecorderManager();
 
-    recorderManager.onFrameRecorded((res) => {
-      if (audioWs && res.frameBuffer && res.frameBuffer.byteLength > 0) {
-        try {
-          audioWs.send({
-            data: res.frameBuffer,
-            success: () => {},
-            fail: (err) => console.log('[v0] 音频帧发送失败:', JSON.stringify(err)),
-          });
-        } catch (e) {
-          console.log('[v0] 音频帧 send 异常:', e.message || e);
-        }
+    recorderMgr.onFrameRecorded((res) => {
+      if (!audioWs || !res.frameBuffer || res.frameBuffer.byteLength === 0) return;
+      try {
+        audioWs.send({
+          data: res.frameBuffer,
+          success() {},
+          fail(err) { console.log('[Subtitle] 音频帧发送失败:', JSON.stringify(err)); },
+        });
+      } catch (e) {
+        console.log('[Subtitle] 音频帧 send 异常:', e.message || e);
       }
     });
 
-    recorderManager.onStop(() => {
-      console.log('[v0] 录音已停止');
+    recorderMgr.onStop(() => {
+      console.log('[Subtitle] 录音已停止');
     });
 
-    recorderManager.onError((err) => {
-      console.log('[v0] 录音错误:', JSON.stringify(err));
+    recorderMgr.onError((err) => {
+      console.log('[Subtitle] 录音错误:', JSON.stringify(err));
     });
 
-    // PCM 16kHz 单声道，frameSize=1KB ≈ 40ms
-    recorderManager.start({
-      sampleRate: 16000,
+    // PCM 16kHz 单声道，frameSize=1 KB ≈ 40ms（640 byte）
+    recorderMgr.start({
+      sampleRate:       16000,
       numberOfChannels: 1,
-      encodeBitRate: 256000,
-      format: 'pcm',
-      frameSize: 1,
+      encodeBitRate:    256000,
+      format:           'pcm',
+      frameSize:        1,
     });
 
-    console.log('[v0] 录音已启动 (PCM 16kHz 单声道)');
+    console.log('[Subtitle] 录音已启动 PCM 16kHz 单声道');
   } catch (err) {
-    console.log('[v0] 启动录音失败:', err.message || err);
+    console.log('[Subtitle] 启动录音失败:', err.message || err);
   }
-};
+}
 
-const stopRecorder = () => {
-  if (recorderManager) {
-    try { recorderManager.stop(); } catch (_) {}
-    recorderManager = null;
+function stopRecorder() {
+  if (recorderMgr) {
+    try { recorderMgr.stop(); } catch (_) {}
+    recorderMgr = null;
   }
-};
+}
 
-// ─── 字幕 WebSocket ───────────────────────────
-
-const connectSubtitleWs = () => {
-  console.log('[v0] 连接字幕 WS:', subtitleWsUrl);
+// ── 字幕 WebSocket（接收字幕 JSON）───────────────────────
+function connectSubtitleWs() {
+  console.log('[Subtitle] 连接字幕 WS:', subtitleWsUrl);
   try {
-    subtitleWs = uni.connectSocket({
-      url: subtitleWsUrl,
-      success: () => {},
-      fail: (err) => console.log('[v0] 字幕 WS 连接失败:', JSON.stringify(err)),
-    });
+    subtitleWs = uni.connectSocket({ url: subtitleWsUrl, multiple: true });
 
     subtitleWs.onOpen(() => {
-      console.log('[v0] 字幕 WS 已连接');
+      console.log('[Subtitle] 字幕 WS 已连接');
       reconnectCount = 0;
-      if (reconnectTimer) {
-        clearTimeout(reconnectTimer);
-        reconnectTimer = null;
-      }
+      if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
     });
 
     subtitleWs.onMessage((event) => {
@@ -312,21 +326,19 @@ const connectSubtitleWs = () => {
     });
 
     subtitleWs.onClose(() => {
-      console.log('[v0] 字幕 WS 断开');
-      if (isInCall) {
-        scheduleSubtitleReconnect();
-      }
+      console.log('[Subtitle] 字幕 WS 断开');
+      if (isInCall) scheduleSubtitleReconnect();
     });
 
     subtitleWs.onError((err) => {
-      console.log('[v0] 字幕 WS 错误:', JSON.stringify(err));
+      console.log('[Subtitle] 字幕 WS 错误:', JSON.stringify(err));
     });
   } catch (err) {
-    console.log('[v0] 字幕 WS 连接异常:', err.message || err);
+    console.log('[Subtitle] 字幕 WS 连接异常:', err.message || err);
   }
-};
+}
 
-const handleSubtitleMessage = (rawData) => {
+function handleSubtitleMessage(rawData) {
   try {
     const msg = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
     if (!msg || msg.type !== 'text') return;
@@ -334,100 +346,109 @@ const handleSubtitleMessage = (rawData) => {
     const { speakerRole, convertedText, isFinal } = msg;
 
     subtitleStore.currentText = convertedText || '';
-    subtitleStore.speakerRole = speakerRole || '';
-    subtitleStore.isFinal = !!isFinal;
+    subtitleStore.speakerRole = speakerRole   || '';
+    subtitleStore.isFinal     = !!isFinal;
 
-    if (isFinal) {
+    if (isFinal && convertedText) {
       subtitleStore.history.push({
         speakerRole,
-        text: convertedText,
+        text:      convertedText,
         timestamp: msg.timestamp || Date.now(),
       });
       // 最多保留 50 条历史
-      if (subtitleStore.history.length > 50) {
-        subtitleStore.history.shift();
-      }
+      if (subtitleStore.history.length > 50) subtitleStore.history.shift();
     }
+
+    // 同步到响应式 ref，驱动 template 重新渲染
+    syncView();
   } catch (err) {
-    console.log('[v0] 字幕消息解析失败:', err.message, rawData);
+    console.log('[Subtitle] 字幕消息解析失败:', err.message, rawData);
   }
-};
+}
 
 // 指数退避重连，最多 5 次
-const scheduleSubtitleReconnect = () => {
+function scheduleSubtitleReconnect() {
   if (reconnectCount >= 5) {
-    console.log('[v0] 字幕 WS 已达最大重连次数');
+    console.log('[Subtitle] 字幕 WS 已达最大重连次数');
     return;
   }
   const delay = Math.min(1000 * Math.pow(2, reconnectCount), 30000);
   reconnectCount++;
-  console.log(`[v0] 字幕 WS 将在 ${delay}ms 后重连（第 ${reconnectCount} 次）`);
+  console.log(`[Subtitle] 字幕 WS ${delay}ms 后重连（第 ${reconnectCount} 次）`);
   reconnectTimer = setTimeout(() => {
     if (isInCall) connectSubtitleWs();
   }, delay);
-};
+}
 
-const closeSubtitleWs = () => {
-  if (reconnectTimer) {
-    clearTimeout(reconnectTimer);
-    reconnectTimer = null;
-  }
+function closeSubtitleWs() {
+  if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
   if (subtitleWs) {
     try { subtitleWs.close(); } catch (_) {}
     subtitleWs = null;
   }
   reconnectCount = 0;
-};
+}
 
-// ─── 生命周期 ─────────────────────────────────
-onMounted(() => {
-  initTUICallKit();
+// ── App 生命周期 ──────────────────────────────────────────
+// uni-app 的 App.vue 中用 @dcloudio/uni-app 的 onLaunch，而不是 Vue 的 onMounted
+onLaunch(() => {
+  console.log('[Subtitle] App onLaunch');
+  const phone = uni.getStorageSync('phone');
+  if (phone) {
+    // 已登录：直接初始化
+    initTUICallKit();
+  } else {
+    // 未登录：等待登录完成后再初始化（登录页调用 uni.$emit('userLoggedIn')）
+    uni.$on('userLoggedIn', () => {
+      console.log('[Subtitle] 收到 userLoggedIn，初始化 TUICallKit');
+      initTUICallKit();
+    });
+  }
 });
 
-onUnmounted(() => {
-  onCallEnd();
+onShow(() => {
+  console.log('[Subtitle] App onShow');
+});
+
+onHide(() => {
+  console.log('[Subtitle] App onHide');
 });
 // #endif
 </script>
 
-<!-- App 全局生命周期（uni-app 要求用 Options API 的 onLaunch 等钩子） -->
+<!-- Options API block：uni-app 要求 App.vue 必须有 onLaunch 等选项（可为空） -->
 <script>
 export default {
-  onLaunch() {
-    console.log('[v0] App Launch');
-  },
-  onShow() {
-    console.log('[v0] App Show');
-  },
-  onHide() {
-    console.log('[v0] App Hide');
-  },
+  onLaunch() {},
+  onShow() {},
+  onHide() {},
 };
 </script>
 
 <style lang="scss">
-/* 每个页面公共 CSS */
+/* 全局公共样式 */
 @import "@/styles/index.scss";
 
 /* #ifdef APP-PLUS */
-/* ─── 全局悬浮字幕 ─── */
+/* ── 全局悬浮字幕 ── */
 .subtitle-overlay {
   position: fixed;
   left: 0;
   right: 0;
-  bottom: 180rpx;
+  bottom: 200rpx;
   z-index: 9999;
   pointer-events: none;
   display: flex;
   justify-content: center;
   padding: 0 40rpx;
+  box-sizing: border-box;
 }
 
 .subtitle-bar {
   max-width: 90%;
-  background-color: rgba(0, 0, 0, 0.65);
+  background-color: rgba(0, 0, 0, 0.68);
   border-radius: 16rpx;
-  padding: 14rpx 28rpx;
+  padding: 16rpx 32rpx;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -435,9 +456,9 @@ export default {
 
 .subtitle-role {
   font-size: 22rpx;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.55);
   margin-bottom: 6rpx;
-  line-height: 1.2;
+  line-height: 1.3;
 }
 
 .subtitle-text {
@@ -447,9 +468,9 @@ export default {
   word-break: break-all;
 }
 
-/* 中间结果：底部虚线表示"正在说" */
+/* 中间结果：虚线下划线表示"正在说" */
 .subtitle-interim {
-  border-bottom: 2rpx dashed rgba(255, 255, 255, 0.5);
+  border-bottom: 2rpx dashed rgba(255, 255, 255, 0.45);
   padding-bottom: 2rpx;
 }
 /* #endif */
